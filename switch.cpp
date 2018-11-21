@@ -49,6 +49,15 @@ void Switch::main(struct pollfd fdarray[], int number_of_fds){
         }
 
         rval = poll(fdarray, number_of_fds, 10);
+
+        if (rval < 0){
+            if (errno == EINTR) { // signal SIGUSR1 has been recieved
+                continue;
+            }
+            perror("Poll Failed");
+            exit(1);
+        }
+
         if (rval > 0){
             for (int i=0; i <= number_of_fds; i++){
                 if (fdarray[i].revents & POLLIN){
@@ -221,7 +230,10 @@ void Switch::connect_to_server(){
     serv.sin_family = AF_INET; 
     serv.sin_port = htons(this->server_port_number); 
 
-    inet_pton(AF_INET, get_ip_address(this->server_address).c_str(), &serv.sin_addr);
+    if (inet_pton(AF_INET, get_ip_address(this->server_address).c_str(), &serv.sin_addr) < 0){
+        perror("Error in IP Adress");
+        exit(1);
+    }
 
     if(connect(this->socket_fd, (struct sockaddr *)&serv, sizeof(serv)) < 0){
         perror("Socket Connection Failed");
@@ -235,7 +247,10 @@ void Switch::connect_to_server(){
 void Switch::send_message(struct message m, int target){
     if (target == 0){
         printf("Transmitted (src= sw%d, dest= cont)", this->switch_number);
-        write(this->socket_fd, (char*)&m, sizeof(m));
+        if (write(this->socket_fd, (char*)&m, sizeof(m)) < 0){
+            perror("Write Failed");
+            exit(1);
+        }
     }
     else{
         printf("Transmitted (src= sw%d, dest= sw%d)", this->switch_number, target);
@@ -245,7 +260,11 @@ void Switch::send_message(struct message m, int target){
             fd  = open(ds.c_str(), O_WRONLY | O_NONBLOCK);
             this->set_fd_write(target, fd);
         }
-        write(fd, (char*)&m, sizeof(m));
+        if (write(fd, (char*)&m, sizeof(m)) < 0){
+            perror("Write Failed");
+            exit(1);
+        }
+        
     }
     m.print();
 }

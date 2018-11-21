@@ -1,6 +1,6 @@
 # Traffic file for a3sdn
-# clear; ./a3sdn.o cont 1 9978
-# clear; ./a3sdn.o sw1 t1.dat null null 100-110 localhost 9978
+# clear; ./a3sdn cont 1 9978
+# clear; ./a3sdn sw1 t1.dat null null 100-110 localhost 9978
 sw1 100 102
 sw2 200 300
 sw3 200 300

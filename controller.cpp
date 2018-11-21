@@ -45,6 +45,13 @@ void Controller::main(struct pollfd fdarray[]){
     int N = 2; // Initially we are just polling master socket and the keyboard
     while (true){
         rval = poll(fdarray, N, 10);
+        if (rval < 0){
+            if (errno == EINTR) { // signal SIGUSR1 has been recieved
+                continue;
+            }
+            perror("Poll Failed");
+            exit(1);
+        }
         if (rval > 0){
             if (fdarray[0].revents & POLLIN){ // a new client is connecting
 
@@ -190,7 +197,10 @@ void Controller::send_message(struct message m, int target){
     m.print();
     struct controller_known_switch_data sw_data = get_switch_data(target);
 
-    write(sw_data.fd, (char*)&m, sizeof(m));
+    if (write(sw_data.fd, (char*)&m, sizeof(m)) < 0){
+        perror("Write Failed");
+        exit(1);
+    }
 }
 
 
